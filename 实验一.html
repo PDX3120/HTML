@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>Document</title>
+		<style>
+			div {
+				margin: 10px;
+			}
+
+			table,
+			tr,
+			td {
+				border: 1px black solid;
+				border-collapse: collapse;
+				text-align: center;
+				width: 600px;
+			}
+
+			#app {
+				width: 800px;
+				height: 500px;
+				margin: auto;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="app">
+			<div class="form">
+				<h1>学生信息录入系统</h1>
+				<div>
+					姓名：<input type="text" placeholder="请输入学生的姓名..." v-model="student.name" />
+				</div>
+				<div>
+					学号：<input type="text" v-model="student.number" />
+				</div>
+				<div>
+					年龄：<input type="number" v-model="student.age" />
+				</div>
+				<div>
+					性别：<input type="radio" name="gender" value="男生" v-model="student.gender" />男生
+					<input type="radio" name="gender" value="女生" v-model="student.gender" />女生
+				</div>
+				<div>
+					地址：
+					<select v-model="student.addr">
+						<option>请选择</option>
+						<option v-for="i in address">{{i}}</option>
+					</select>
+				</div>
+				<div>
+					<button @click="createStudent" style="background-color: orangered; color: white;">创建学生信息</button>
+				</div>
+			</div>
+			<hr>
+			<div class="table">
+				<table>
+					<tr>
+						<td>姓名</td>
+						<td>学号</td>
+						<td><button @click="descending" style="border: 0; background-color: transparent;">年龄↑</button>
+						</td>
+						<td>性别</td>
+						<td>地址</td>
+						<td>操作</td>
+					</tr>
+					<tr v-for="student in students" :key="student.id">
+						<td>{{student.name}}</td>
+						<td>{{student.number}}</td>
+						<td>{{student.age}}</td>
+						<td>{{student.gender}}</td>
+						<td>{{student.addr}}</td>
+						<td><button @click="deleteStudent(student.id)"
+								style="background-color: dodgerblue; color: white;">删除</button></td>
+					</tr>
+				</table>
+				<div>按姓名搜索:<input type="text" v-model="searchName" /><button @click="getStudentByName"
+						style="background-color: darkturquoise; color: white;">搜索</button></div>
+			</div>
+		</div>
+	</body>
+
+	<script src="https://cdn.staticfile.org/vue/3.0.5/vue.global.js"></script>
+	<script>
+		const app = {
+			data() {
+				return {
+					address: ["四川省", "河北省", "山东省", "辽宁省", "黑龙江省", "甘肃省"],
+					student: {
+						id: '',
+						name: '',
+						number: '',
+						age: '',
+						gender: '男生',
+						addr: ''
+					},
+					students: [{
+							id: 1,
+							name: '张三',
+							number: '01',
+							age: 20,
+							gender: '男生',
+							addr: '四川省'
+						},
+						{
+							id: 2,
+							name: '李四',
+							number: '02',
+							age: 19,
+							gender: '男生',
+							addr: '河北省'
+						},
+						{
+							id: 3,
+							name: '王五',
+							number: '03',
+							age: 18,
+							gender: '女生',
+							addr: '山东省'
+						},
+					],
+					// 需要查询的名字
+					searchName: '',
+					// 防止查询用户后其他用户被删除
+					copyStudent: []
+				}
+			},
+			methods: {
+				// 校验数据
+				check() {
+					let student = this.student
+					let flag = true
+					if (student.name == '') {
+						flag = false
+						alert('姓名不能为空')
+					}
+					if (student.number == '') {
+						flag = false
+						alert('学号不能为空')
+					}
+					if (student.age == '') {
+						flag = false
+						alert('年龄不能为空')
+					} else if (parseInt(student.age) < 10) {
+						flag = false
+						alert('年龄不能小于10')
+					}
+					if (student.addr == '' || student.addr == "请选择") {
+						flag = false
+						alert('地址不能为空')
+					}
+
+					return flag
+				},
+				// 添加学生
+				createStudent() {
+					// 不确定用户操作顺序，防止数据丢失
+					if (this.copyStudent.length == 0) {
+						this.copyStudent = this.students
+					} else {
+						this.students = this.copyStudent
+					}
+					if (!this.check()) {
+						return
+					}
+					let id = 0
+					if(this.students.length != 0){
+						id = this.students[this.students.length - 1].id
+					}
+					 
+					this.student.id = ++id
+					this.students.unshift(this.student)
+					// 置空，防止校验失效
+					this.student = {
+						id: '',
+						name: '',
+						number: '',
+						age: '',
+						gender: '男生',
+						addr: ''
+					}
+					// 备份
+					this.copyStudent = this.students
+				},
+				// 删除学生
+				deleteStudent(id) {
+					if (this.copyStudent.length == 0) {
+						this.copyStudent = this.students
+					}
+					// 根据id查询
+					let student = this.students.find(student => student.id == id)
+					// 获取用户的下标
+					// let index = this.students.indexOf(student)
+					// 删除下标，一个元素
+					// this.students.splice(index, 1)
+					// this.copyStudent.splice(index, 1)
+					let arr = []
+					for (s of this.copyStudent) {
+						if (s === student) {
+							continue
+						}
+						arr.push(s)
+					}
+					this.searchName = ''
+					this.students = arr
+					this.copyStudent = this.students
+					console.log(this.students);
+				},
+				// 查询学生
+				getStudentByName() {
+					if (this.copyStudent.length == 0) {
+						this.copyStudent = this.students
+					}
+					// 模糊查询
+					let students = this.copyStudent.filter(student => {
+						return student.name.indexOf(this.searchName) > -1
+					})
+					this.students = students
+				},
+				// 升序
+				descending() {
+					this.students = this.students.sort((a, b) => a.age < b.age ? -1 : a.age > b.age ? 1 : 0)
+				}
+			}
+		}
+		Vue.createApp(app).mount('#app')
+	</script>
+
+</html>
